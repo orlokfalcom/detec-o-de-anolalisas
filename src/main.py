@@ -138,11 +138,29 @@ def main():
         )
         rules_detector = RulesDetector("config/rules.yaml")
         
+        # Configure terminal output to support UTF-8 emojis on Windows
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
+
         # --- Ensemble Meta-Learner Training ---
-        logger.info("Evaluating detectors on recent dataset to fit Ensemble Meta-Learner...")
+        logger.info("Selecting balanced transactions to train Ensemble Meta-Learner...")
+        # To handle severe imbalance, include all fraud cases and a sample of normal cases
+        fraud_indices = df_scaled[df_scaled["is_fraud"] == 1].index.tolist()
+        normal_indices = df_scaled[df_scaled["is_fraud"] == 0].index.tolist()
+        
+        np.random.seed(42)
+        sampled_normal_indices = list(np.random.choice(
+            normal_indices, 
+            size=min(2000, len(normal_indices)), 
+            replace=False
+        ))
+        
+        meta_train_indices = set(fraud_indices + sampled_normal_indices)
+        
         scores_dataset = []
         user_histories = {}
-        meta_train_start_idx = max(0, len(df_scaled) - 2000)
         y_true_meta = []
         
         for idx, row in df_scaled.iterrows():
@@ -150,7 +168,7 @@ def main():
             tx_dict = row.to_dict()
             hist = user_histories.get(user_id, [])
             
-            if idx >= meta_train_start_idx:
+            if idx in meta_train_indices:
                 s_score, _ = stat_detector.predict_score(tx_dict, hist)
                 r_score, _ = rules_detector.predict_score(tx_dict, hist)
                 
@@ -180,11 +198,16 @@ def main():
         scores_matrix = np.array(scores_dataset)
         y_true_meta = np.array(y_true_meta)
         
+        # Apply SMOTE to perfectly balance meta-learner inputs
+        from imblearn.over_sampling import SMOTE
+        smote = SMOTE(random_state=42)
+        scores_matrix_res, y_true_meta_res = smote.fit_resample(scores_matrix, y_true_meta)
+        
         meta_learner = EnsembleMetaLearner(
             weights=config["ensemble"]["weights"],
             meta_model_path=f"{config['models']['save_dir']}/meta_model.pkl"
         )
-        meta_learner.fit_meta_learner(scores_matrix, y_true_meta)
+        meta_learner.fit_meta_learner(scores_matrix_res, y_true_meta_res)
         mlflow.log_artifact(meta_learner.meta_model_path, "meta_learner")
         
         # --- Evaluate Performance metrics ---
@@ -198,7 +221,10 @@ def main():
         y_pred = [1 if risk > 50.0 else 0 for risk in y_pred_scores]
         
         metrics = calculate_fraud_metrics(y_true_meta, y_pred, y_prob=np.array(y_pred_scores)/100.0)
-        financial = calculate_financial_impact(y_true_meta, y_pred, df_scaled.iloc[meta_train_start_idx:]["amount"].values)
+        
+        # Extract corresponding transaction amounts for the scored items
+        meta_amounts = df_scaled.loc[list(meta_train_indices), "amount"].values
+        financial = calculate_financial_impact(y_true_meta, y_pred, meta_amounts)
         
         # Log metrics to MLflow
         mlflow.log_metrics({
