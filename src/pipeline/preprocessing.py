@@ -204,12 +204,27 @@ class DataPreprocessor:
             for idx, col in enumerate(self.feature_cols):
                 seq[-1, idx] = current_tx_scaled[f"scaled_{col}"]
             return np.expand_dims(seq, axis=0)
+
+        # Fast path optimization: if history is already scaled, extract directly
+        first_item = user_history_list[0]
+        if f"scaled_{self.feature_cols[0]}" in first_item:
+            recent_hist = user_history_list[-(seq_length - 1):]
+            hist_features = []
+            for tx in recent_hist:
+                hist_features.append([tx.get(f"scaled_{col}", 0.0) for col in self.feature_cols])
             
+            curr_features = [current_tx_scaled[f"scaled_{col}"] for col in self.feature_cols]
+            hist_features.append(curr_features)
+            
+            while len(hist_features) < seq_length:
+                hist_features.insert(0, [0.0] * len(self.feature_cols))
+                
+            return np.expand_dims(np.array(hist_features), axis=0)
+            
+        # Slow path (for raw API inputs): construct dataframe and scale
         history = pd.DataFrame(user_history_list)
-        # Ensure we scale the history features
         history_scaled = self.scale_features(history)
         
-        # Extract features
         hist_features = history_scaled[scaled_cols].values
         curr_features = np.array([current_tx_scaled[f"scaled_{col}"] for col in self.feature_cols])
         

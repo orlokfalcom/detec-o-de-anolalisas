@@ -1,0 +1,14 @@
+artifact_uri: file:///E:/documentos/GitHub/detec-o-de-anolalisas/mlruns/192375476711471774/b961750e05444e60bd6419680d08d1cf/artifacts
+end_time: null
+entry_point_name: ''
+experiment_id: '192375476711471774'
+lifecycle_stage: active
+run_id: b961750e05444e60bd6419680d08d1cf
+run_name: capable-stoat-674
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1782059835775
+status: 1
+tags: []
+user_id: ronal
