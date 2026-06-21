@@ -139,41 +139,52 @@ def main():
         rules_detector = RulesDetector("config/rules.yaml")
         
         # --- Ensemble Meta-Learner Training ---
-        logger.info("Evaluating all detectors on dataset to fit Ensemble Meta-Learner...")
+        logger.info("Evaluating detectors on recent dataset to fit Ensemble Meta-Learner...")
         scores_dataset = []
         user_histories = {}
+        meta_train_start_idx = max(0, len(df_scaled) - 2000)
+        y_true_meta = []
         
         for idx, row in df_scaled.iterrows():
             user_id = row["user_id"]
             tx_dict = row.to_dict()
             hist = user_histories.get(user_id, [])
             
-            s_score, _ = stat_detector.predict_score(tx_dict, hist)
-            r_score, _ = rules_detector.predict_score(tx_dict, hist)
-            
-            scaled_feat = np.array([[row[f"scaled_{col}"] for col in pipeline.preprocessor.feature_cols]])
-            i_score, _ = iforest.predict_score(scaled_feat)
-            
-            seq = pipeline.preprocessor.get_user_sequence(hist, row, seq_length=seq_len)
-            l_score, _ = lstm_ae.predict_score(seq)
-            
-            x_score, _ = xgb_det.predict_score(scaled_feat)
-            
-            g_score, _ = graph_det.predict_score(tx_dict)
-            
-            scores_dataset.append([s_score, r_score, i_score, l_score, x_score, g_score])
+            if idx >= meta_train_start_idx:
+                s_score, _ = stat_detector.predict_score(tx_dict, hist)
+                r_score, _ = rules_detector.predict_score(tx_dict, hist)
+                
+                scaled_feat = np.array([[row[f"scaled_{col}"] for col in pipeline.preprocessor.feature_cols]])
+                i_score, _ = iforest.predict_score(scaled_feat)
+                
+                seq = pipeline.preprocessor.get_user_sequence(hist, row, seq_length=seq_len)
+                l_score, _ = lstm_ae.predict_score(seq)
+                
+                x_score, _ = xgb_det.predict_score(scaled_feat)
+                
+                g_score, _ = graph_det.predict_score(tx_dict)
+                
+                scores_dataset.append([s_score, r_score, i_score, l_score, x_score, g_score])
+                y_true_meta.append(row["is_fraud"])
+            else:
+                # Build graph edges to preserve state
+                recipient = row.get("recipient_id")
+                if not recipient:
+                    recipient = f"REC_{row['device_id'][3:]}" if str(row['device_id']).startswith("DEV") else "REC_UNKNOWN"
+                graph_det.G.add_edge(user_id, recipient, amount=float(row["amount"]), timestamp=str(row["timestamp"]))
             
             # Keep history updated
             hist.append(tx_dict)
             user_histories[user_id] = hist
             
         scores_matrix = np.array(scores_dataset)
+        y_true_meta = np.array(y_true_meta)
         
         meta_learner = EnsembleMetaLearner(
             weights=config["ensemble"]["weights"],
             meta_model_path=f"{config['models']['save_dir']}/meta_model.pkl"
         )
-        meta_learner.fit_meta_learner(scores_matrix, y_true)
+        meta_learner.fit_meta_learner(scores_matrix, y_true_meta)
         mlflow.log_artifact(meta_learner.meta_model_path, "meta_learner")
         
         # --- Evaluate Performance metrics ---
@@ -186,8 +197,8 @@ def main():
             
         y_pred = [1 if risk > 50.0 else 0 for risk in y_pred_scores]
         
-        metrics = calculate_fraud_metrics(y_true, y_pred, y_prob=np.array(y_pred_scores)/100.0)
-        financial = calculate_financial_impact(y_true, y_pred, df_scaled["amount"].values)
+        metrics = calculate_fraud_metrics(y_true_meta, y_pred, y_prob=np.array(y_pred_scores)/100.0)
+        financial = calculate_financial_impact(y_true_meta, y_pred, df_scaled.iloc[meta_train_start_idx:]["amount"].values)
         
         # Log metrics to MLflow
         mlflow.log_metrics({
