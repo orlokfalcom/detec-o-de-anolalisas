@@ -1,0 +1,31 @@
+{
+  "transaction": {
+    "transaction_id": "T_SIMUL_9999",
+    "user_id": "U000",
+    "timestamp": "2026-05-22T20:34:07.414152",
+    "amount": 2500.0,
+    "latitude": -17.55024,
+    "longitude": -51.07398,
+    "device_id": "DEV_ROUGE_99",
+    "recipient_id": "U000"
+  },
+  "scores": {
+    "statistical": 100.0,
+    "rules": 100.0,
+    "isolation_forest": 79.28149800665663,
+    "lstm": 100.0,
+    "xgboost": 0.132513165473938,
+    "graph_triangulation": 90.0
+  },
+  "consolidated": {
+    "risk_score": 4.70871863167224e-18,
+    "decision": "APPROVE",
+    "reasons": [
+      "bacen_night_limit",
+      "high_frequency_velocity",
+      "impossible_travel",
+      "device_fingerprint_limit"
+    ]
+  },
+  "explanation": "### 🧠 RELATÓRIO ANTIFRAUDE (MOCK GENERATIVE AI RESPONSE)\n\n**1. 📌 Explicação da decisão:**\nA transação foi APROVADA automaticamente. O comportamento é condizente com o histórico do cliente U000.\n\n**2. 📊 Sinais principais:**\n- Disparo de Pix Noturno (BACEN) para valor de R$ 2500.00.\n- Frequência anômala de transações (4 no último minuto).\n- Velocidade incompatível fisicamente: 586851.5 km/h entre cidades.\n- Uso de 85 dispositivos nas últimas 24h.\n- ALERTA FINANCEIRO: O grafo de transferências detectou triangulação de contas Pix (ALERTA: Ciclo detectado (Length-2 Cycle (Direct Loop))) direcionado a U000.\n\n**3. 🧬 Análise comportamental:**\nO valor de R$ 2500.00 representa um aumento anômalo de 1688.3% em relação ao gasto médio histórico (R$ 139.80). Z-score: 9.70. O modelo recorrente LSTM acionou desvio de padrão sequencial recente.\n\n**4. 🧠 Conclusão:**\nNenhuma ação necessária."
+}

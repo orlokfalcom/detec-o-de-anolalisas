@@ -62,6 +62,12 @@ class EnsembleMetaLearner:
             prob = self.meta_model.predict_proba(scores_arr)[0, 1]
             ensemble_score = float(prob * 100.0)
             method = "meta_learner_lr"
+            
+            # Cascade veto: If compliance rules or graph cycle alerts trigger a critical flag,
+            # we enforce that the risk score reflects this critical alert.
+            if rules_score >= 80.0 or graph_score >= 90.0 or stat_score >= 95.0:
+                ensemble_score = max(ensemble_score, rules_score, graph_score, stat_score)
+                method = "meta_learner_lr_with_veto"
         else:
             # Weighted average fallback
             ensemble_score = float(
@@ -73,6 +79,11 @@ class EnsembleMetaLearner:
                 self.weights.get("graph_triangulation", 0.10) * graph_score
             )
             method = "weighted_average"
+            
+            # Apply same cascade logic for fallback
+            if rules_score >= 80.0 or graph_score >= 90.0 or stat_score >= 95.0:
+                ensemble_score = max(ensemble_score, rules_score, graph_score, stat_score)
+                method = "weighted_average_with_veto"
             
         details = {
             "method": method,

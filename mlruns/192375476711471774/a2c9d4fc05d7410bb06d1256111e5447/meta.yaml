@@ -1,5 +1,5 @@
 artifact_uri: file:///E:/documentos/GitHub/detec-o-de-anolalisas/mlruns/192375476711471774/a2c9d4fc05d7410bb06d1256111e5447/artifacts
-end_time: null
+end_time: 1782061147608
 entry_point_name: ''
 experiment_id: '192375476711471774'
 lifecycle_stage: active
@@ -9,6 +9,6 @@ source_name: ''
 source_type: 4
 source_version: ''
 start_time: 1782060884877
-status: 1
+status: 3
 tags: []
 user_id: ronal
