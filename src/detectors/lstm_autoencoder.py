@@ -37,7 +37,7 @@ class LSTMAutoencoderModel(nn.Module):
         return reconstructed
 
 class LSTMAutoencoderDetector:
-    def __init__(self, model_path="models/lstm_autoencoder.pth", input_dim=12, hidden_dim=16, latent_dim=8, sequence_length=5):
+    def __init__(self, model_path="models/lstm_autoencoder.pth", input_dim=13, hidden_dim=16, latent_dim=8, sequence_length=5):
         self.model_path = model_path
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim

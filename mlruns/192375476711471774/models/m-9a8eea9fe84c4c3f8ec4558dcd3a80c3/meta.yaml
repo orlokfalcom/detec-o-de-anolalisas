@@ -1,0 +1,10 @@
+artifact_location: file:///E:/documentos/GitHub/detec-o-de-anolalisas/mlruns/192375476711471774/models/m-9a8eea9fe84c4c3f8ec4558dcd3a80c3/artifacts
+creation_timestamp: 1782058727736
+experiment_id: '192375476711471774'
+last_updated_timestamp: 1782058727930
+model_id: m-9a8eea9fe84c4c3f8ec4558dcd3a80c3
+model_type: null
+name: lstm_autoencoder
+source_run_id: eac967206d3c4eb5bfc803d7f21411ee
+status: 3
+status_message: null

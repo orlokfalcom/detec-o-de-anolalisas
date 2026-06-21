@@ -91,10 +91,11 @@ class FeatureEngineer:
         
         # 4. Device Features
         # Number of unique devices in the last 24h
+        df_time_indexed["device_factorized"] = pd.factorize(df_time_indexed["device_id"])[0]
         df["device_count_24h"] = (
-            df_time_indexed.groupby("user_id")["device_id"]
+            df_time_indexed.groupby("user_id")["device_factorized"]
             .rolling("86400s")
-            .apply(lambda x: len(np.unique(x)), raw=False)
+            .apply(lambda x: len(np.unique(x)), raw=True)
             .values
         )
         

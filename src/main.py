@@ -22,6 +22,9 @@ from src.llm.fraud_explainer import FraudExplainer
 from src.utils.metrics import calculate_fraud_metrics, calculate_financial_impact
 
 def main():
+    # Opt-out of MLflow file store deprecation exception
+    os.environ["MLFLOW_ALLOW_FILE_STORE"] = "true"
+    
     logger.info("==================================================")
     logger.info("STARTING FRAUD INTELLIGENCE AI SYSTEM")
     logger.info("==================================================")
@@ -81,7 +84,7 @@ def main():
             n_estimators=config["models"]["isolation_forest"]["n_estimators"]
         )
         iforest.fit(feature_matrix)
-        mlflow.sklearn.log_model(iforest.model, "isolation_forest")
+        mlflow.log_artifact(iforest.model_path, "isolation_forest")
         
         # --- Model 2: LSTM Autoencoder ---
         seq_len = config["models"]["lstm_autoencoder"]["sequence_length"]
@@ -101,7 +104,7 @@ def main():
             lr=config["models"]["lstm_autoencoder"]["learning_rate"],
             threshold_percentile=config["models"]["lstm_autoencoder"]["threshold_percentile"]
         )
-        mlflow.pytorch.log_model(lstm_ae.model, "lstm_autoencoder")
+        mlflow.log_artifact(lstm_ae.model_path, "lstm_autoencoder")
         
         # --- Model 3: Supervised XGBoost (Trained on balanced data via SMOTE) ---
         # Apply SMOTE to handle imbalance
@@ -114,7 +117,7 @@ def main():
             n_estimators=config["models"]["xgboost"]["n_estimators"]
         )
         xgb_det.fit(X_res, y_res)
-        mlflow.sklearn.log_model(xgb_det.model, "xgboost")
+        mlflow.log_artifact(xgb_det.model_path, "xgboost")
         
         # --- Model 4: NetworkX Graph ---
         graph_det = GraphTriangulationDetector(
@@ -171,7 +174,7 @@ def main():
             meta_model_path=f"{config['models']['save_dir']}/meta_model.pkl"
         )
         meta_learner.fit_meta_learner(scores_matrix, y_true)
-        mlflow.sklearn.log_model(meta_learner.meta_model, "meta_learner")
+        mlflow.log_artifact(meta_learner.meta_model_path, "meta_learner")
         
         # --- Evaluate Performance metrics ---
         logger.info("Computing metrics for logging...")

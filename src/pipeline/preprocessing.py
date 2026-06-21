@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-import jobjoin
+import joblib
 import os
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE

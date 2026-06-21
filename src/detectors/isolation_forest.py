@@ -28,7 +28,8 @@ class IsolationForestDetector:
             "scaled_velocity_sum_1h", 
             "scaled_amount_z_score", 
             "scaled_device_count_24h", 
-            "scaled_device_changed"
+            "scaled_device_changed",
+            "scaled_device_id_encoded"
         ]
 
     def fit(self, X_train):

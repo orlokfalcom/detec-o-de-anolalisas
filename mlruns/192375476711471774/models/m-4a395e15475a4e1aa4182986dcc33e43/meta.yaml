@@ -1,0 +1,10 @@
+artifact_location: file:///E:/documentos/GitHub/detec-o-de-anolalisas/mlruns/192375476711471774/models/m-4a395e15475a4e1aa4182986dcc33e43/artifacts
+creation_timestamp: 1782058626891
+experiment_id: '192375476711471774'
+last_updated_timestamp: 1782058699254
+model_id: m-4a395e15475a4e1aa4182986dcc33e43
+model_type: null
+name: isolation_forest
+source_run_id: eac967206d3c4eb5bfc803d7f21411ee
+status: 2
+status_message: null
