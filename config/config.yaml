@@ -1,0 +1,57 @@
+# Fraud Intelligence AI System Configuration
+
+data:
+  raw_path: "data/raw"
+  processed_path: "data/processed"
+  sample_path: "data/sample_transactions.csv"
+  real_path: "data/real_transactions.csv"
+  num_samples: 10000
+  fraud_ratio: 0.05
+  random_state: 42
+
+models:
+  save_dir: "models"
+  isolation_forest:
+    contamination: 0.05
+    n_estimators: 100
+    random_state: 42
+  lstm_autoencoder:
+    sequence_length: 5
+    epochs: 5
+    batch_size: 64
+    learning_rate: 0.001
+    hidden_dim: 16
+    latent_dim: 8
+    threshold_percentile: 95
+  statistical:
+    z_score_threshold: 3.0
+    iqr_multiplier: 1.5
+  xgboost:
+    max_depth: 5
+    learning_rate: 0.1
+    n_estimators: 100
+    random_state: 42
+
+ensemble:
+  weights:
+    statistical: 0.15
+    rules: 0.20
+    isolation_forest: 0.15
+    lstm: 0.15
+    xgboost: 0.25
+    graph_triangulation: 0.10
+
+mlflow:
+  experiment_name: "Fraud_Intelligence_AI_System"
+  tracking_uri: "./mlruns"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  use_redis: false
+  redis_url: "redis://localhost:6379/0"
+  llm:
+    provider: "mock" # "openai", "gemini", or "mock"
+    model: "gpt-4o-mini"
+    max_tokens: 300
+    temperature: 0.2

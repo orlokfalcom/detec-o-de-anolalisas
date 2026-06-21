@@ -1,0 +1,22 @@
+Atue como um Engenheiro de Machine Learning Sênior especialista em Python e Cibersegurança Financeira. Preciso arquitetar um sistema modular em Python que implemente e combine os principais modelos de detecção de fraudes financeiras do mercado.
+
+Por favor, gere a especificação técnica e exemplos de código estruturados nos seguintes tópicos:
+
+1. PIPELINE DE ENSEMBLE EM PYTHON:
+Como criar uma arquitetura de votação ou cascata em Python combinando múltiplos modelos. Demonstre como usar o `VotingClassifier` do scikit-learn ou uma abordagem customizada para combinar previsões em tempo real.
+
+2. ESPECIFICAÇÃO DE ALGORITMOS E BIBLIOTECAS:
+Para cada tipo de detecção, indique a melhor biblioteca Python e a classe específica do modelo:
+
+- Fraude de Cartão: XGBoost (`XGBClassifier`) ou LightGBM (`LGBMClassifier`).
+- Detecção de Anomalias (Novos Golpes): `IsolationForest` (scikit-learn) ou algoritmos da biblioteca PyOD (como KNN ou ECOOD).
+- Lavagem de Dinheiro/Pix: Redes de Grafos com `NetworkX` ou `DeepSNAP` para identificar triangulação de contas.
+
+1. TRATAMENTO DE DADOS DESBALANCEADOS EM PYTHON:
+Considerando que fraudes são raras, demonstre como usar a biblioteca `imbalanced-learn` (como `SMOTE`, `ADASYN` ou subamostragem com `TomekLinks`) no pipeline de preparação de dados.
+
+2. FEATURE ENGINEERING COM PYTHON:
+Quais técnicas de transformação de dados são críticas para o sucesso do modelo (ex: `TargetEncoder` para IDs de dispositivos, extração de componentes de tempo com pandas, cálculo de médias móveis de transações por usuário)?
+
+3. SERVIÇO DE BAIXA LATÊNCIA (<50ms):
+Como empacotar esses modelos em Python para produção em tempo real. Sugira uma abordagem usando FastAPI para a API, Redis para cache de variáveis de perfil do usuário, e MLflow para monitorar a degradação do modelo (data drift).

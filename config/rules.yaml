@@ -1,0 +1,32 @@
+# Fraud Detection Compliance and Business Rules
+# These rules are executed by the rules-based engine
+
+rules:
+  # BACEN (Brazilian Central Bank) Pix limit at night (e.g. 20:00 to 06:00)
+  bacen_night_limit:
+    enabled: true
+    max_amount: 1000.00
+    start_hour: 20
+    end_hour: 6
+    severity: 80 # Risk score increment if triggered
+
+  # Transaction amount limits
+  transaction_limits:
+    single_max_amount: 50000.00 # Instant flag if amount is extremely high
+    severity: 90
+
+  # High frequency velocity rules
+  velocity:
+    time_window_seconds: 60      # 1 minute window
+    max_transactions: 3          # Maximum normal transactions in window
+    severity: 75
+
+  # Geographic velocity rule
+  impossible_travel:
+    max_speed_kph: 800.0         # Speed above commercial jet (e.g. 800 km/h) is considered physical impossibility
+    severity: 95
+
+  # Device fingerprint switching rule
+  device_switch:
+    max_devices_24h: 3           # Alert if user logs in and transacts from >3 devices in 24 hours
+    severity: 70
