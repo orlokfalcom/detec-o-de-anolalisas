@@ -33,12 +33,42 @@ def main():
     config = load_yaml("config/config.yaml")
     
     # 2. Check if we should use the real dataset (check CLI arguments or force True since requested)
-    use_real = "--real" in sys.argv or True  # Default to True since user asked for real dataset
+    import argparse
+    import json
+    import hashlib
+    
+    parser = argparse.ArgumentParser(description="Fraud Intelligence AI System Orchestrator")
+    parser.add_argument("--real", action="store_true", default=True, help="Use real transaction dataset")
+    parser.add_argument("--dataset-url", type=str, default=None, help="Custom dataset URL to download")
+    parser.add_argument("--column-map", type=str, default=None, help="JSON column mapping string")
+    
+    args, unknown = parser.parse_known_args()
+    
+    use_real = args.real
+    col_map = None
+    if args.column_map:
+        try:
+            col_map = json.loads(args.column_map)
+            logger.info(f"Custom column mapping configured: {col_map}")
+        except Exception as e:
+            logger.error(f"Failed to parse --column-map JSON string: {e}")
+            
+    save_path = config["data"]["real_path"]
     
     if use_real:
-        logger.info("System is configured to use the REAL Credit Card Fraud dataset.")
-        # Load and map Kaggle Credit Card Fraud dataset (first 15,000 rows to keep it lightweight)
-        df_raw = download_and_map_real_dataset(config["data"]["real_path"], limit_samples=15000)
+        if args.dataset_url:
+            url_hash = hashlib.md5(args.dataset_url.encode('utf-8')).hexdigest()[:8]
+            save_path = f"data/custom_transactions_{url_hash}.csv"
+            logger.info(f"System is configured to use a CUSTOM REAL dataset from: {args.dataset_url}")
+        else:
+            logger.info("System is configured to use the DEFAULT REAL Credit Card Fraud dataset.")
+            
+        df_raw = download_and_map_real_dataset(
+            save_path=save_path, 
+            limit_samples=15000, 
+            dataset_url=args.dataset_url, 
+            column_mapping=col_map
+        )
     else:
         logger.info("System is configured to use SYNTHETIC dataset.")
         df_raw = None # Pipeline will generate synthetic data
@@ -52,7 +82,7 @@ def main():
     
     # If using real data, override pipeline's ingestion load to use the downloaded CSV
     if use_real:
-        pipeline.ingestion.sample_path = config["data"]["real_path"]
+        pipeline.ingestion.sample_path = save_path
         
     # Run the pipeline (generates features, fits scaler, target encodes, and returns scaled df)
     df_scaled = pipeline.run_training_pipeline()

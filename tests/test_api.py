@@ -106,4 +106,7 @@ def test_api_predict(trained_models_setup):
     assert "risk_score" in data
     assert "decision" in data
     assert "llm_explanation" in data
+    assert "all_probabilities" in data
+    assert "xgboost_probability" in data["all_probabilities"]
+    assert "statistical_z_score" in data["all_probabilities"]
     assert "latency_ms" in data

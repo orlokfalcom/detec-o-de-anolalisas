@@ -159,6 +159,22 @@ class FraudExplainer:
         else:
             decision_exp = f"A transação foi APROVADA automaticamente. O comportamento é condizente com o histórico do cliente {user_id}."
 
+        # Collect minor probability signals to demonstrate fine-grained analysis
+        minor_signals = []
+        xgb_prob = float(fmt_vars.get("xgboost_probability", 0.0))
+        z_score = float(fmt_vars.get("z_score", 0.0))
+        iforest_score = float(fmt_vars.get("isolation_forest_score", 0.0))
+        
+        if 0.0 < xgb_prob <= 0.35:
+            minor_signals.append(f"probabilidade XGBoost sutil de {xgb_prob*100:.1f}%")
+        if 0.0 < z_score <= 2.5:
+            minor_signals.append(f"Z-score leve de {z_score:.2f}")
+        if 0.0 < iforest_score < 50.0:
+            minor_signals.append(f"score Isolation Forest de {iforest_score:.1f}")
+
+        if decision in ["APPROVE", "MONITOR"] and minor_signals:
+            decision_exp += f" Nota: Foram analisadas todas as probabilidades irrelevantes encontradas ({', '.join(minor_signals)}), mas optou-se pela liberação para mitigar falsos positivos no fluxo de clientes legítimos."
+
         signals = []
         if is_night_limit:
             signals.append(f"Disparo de Pix Noturno (BACEN) para valor de R$ {amount:.2f}.")

@@ -107,6 +107,9 @@ Para ponderar as opiniões dos modelos, o sistema emprega uma regressão logíst
 As transações de alto risco encaminhadas para fila humana (`REVIEW` ou `BLOCK`) passam pela camada explicadora que formula um prompt complexo traduzindo estatísticas e alertas técnicos de rede para um relatório humanamente legível, no formato ideal para analistas de compliance seniores. 
 *   *Fallback*: Caso nenhuma API key de IA (`GEMINI_API_KEY` ou `OPENAI_API_KEY`) esteja ativa na sessão, o sistema gera deterministicamente o mesmo relatório estruturado localmente via templates sem quebrar o fluxo da API.
 
+### 5. Análise Fina de Riscos e Mitigação de Falsos Positivos
+O sistema rastreia e analisa todas as probabilidades e anomalias de fraude detectadas, por mais irrelevantes ou sutis que sejam. Todas as saídas dos 6 detectores individuais são expostas em um bloco de resposta granular (`all_probabilities`). Para mitigar falsos positivos e evitar o bloqueio de usuários legítimos por desvios mínimos de comportamento ou valores, o motor de decisão e o gerador de relatórios toleram estes desvios sutis, mantendo a transação como `APPROVE` ou `MONITOR` e justificando no relatório de auditoria por que o bloqueio não foi acionado.
+
 🌐 Especificações da API (FastAPI)
 ----------------------------------
 O serviço opera em baixa latência (<50ms).
@@ -133,10 +136,18 @@ O serviço opera em baixa latência (<50ms).
     {
       "transaction_id": "TX_990182",
       "user_id": "U015",
-      "risk_score": 100.0,
-      "decision": "BLOCK",
-      "llm_explanation": "### 🧠 RELATÓRIO ANTIFRAUDE...\n\n**1. 📌 Explicação da decisão:**\nTransação bloqueada devido a altíssimo risco...",
-      "reasons": ["bacen_night_limit", "impossible_travel"],
+      "risk_score": 12.5,
+      "decision": "APPROVE",
+      "llm_explanation": "### 🧠 RELATÓRIO ANTIFRAUDE...\n\n**1. 📌 Explicação da decisão:**\nTransação aprovada... Nota: Foram analisadas todas as probabilidades irrelevantes encontradas (Z-score leve de 1.15), mas optou-se pela liberação...",
+      "reasons": [],
+      "all_probabilities": {
+        "xgboost_probability": 0.02,
+        "statistical_z_score": 1.15,
+        "isolation_forest_anomaly_score": 0.08,
+        "lstm_reconstruction_error": 0.12,
+        "network_cycle_detected": false,
+        "rules_triggered_count": 0
+      },
       "latency_ms": 12.4
     }
     ```
@@ -150,9 +161,16 @@ O serviço opera em baixa latência (<50ms).
     ```
 
 2.  **Treinamento completo e Simulação**:
-    O script faz o download do dataset real de fraudes no GitHub, executa o mapeamento, o pipeline de treino sob logs do MLflow e testa a resposta do sistema contra uma transação simulada:
+    O script faz o download do dataset real de fraudes no GitHub (ou de qualquer link customizado), executa o mapeamento dinâmico inteligente das colunas e gera dados sintéticos de fallback caso faltem parâmetros como geolocalização ou destinatários.
+    
+    *Executar treinamento padrão (Kaggle mirror):*
     ```bash
     .venv\Scripts\python.exe -m src.main
+    ```
+
+    *Executar com dataset externo customizado e mapeamento explícito:*
+    ```bash
+    .venv\Scripts\python.exe -m src.main --dataset-url "https://sua-url-publica/creditcard.csv" --column-map "{\"amount\": \"Amount\", \"is_fraud\": \"Class\", \"timestamp\": \"Time\"}"
     ```
 
 3.  **Execução da Suíte de Testes**:

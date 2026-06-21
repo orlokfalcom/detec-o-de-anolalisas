@@ -24,6 +24,7 @@ class PredictionResponse(BaseModel):
     decision: str
     llm_explanation: str
     reasons: List[str]
+    all_probabilities: dict
     latency_ms: float
 
 @router.post("/predict", response_model=PredictionResponse)
@@ -125,6 +126,14 @@ async def predict_fraud(payload: TransactionRequest, request: Request):
             decision=decision,
             llm_explanation=explanation,
             reasons=rules_details.get("triggered_rules", []),
+            all_probabilities={
+                "xgboost_probability": float(xgb_details.get("xgboost_probability", 0.0)),
+                "statistical_z_score": float(stat_details.get("z_score", 0.0)),
+                "isolation_forest_anomaly_score": float(iforest_details.get("decision_function_val", 0.0)),
+                "lstm_reconstruction_error": float(lstm_details.get("reconstruction_error", 0.0)),
+                "network_cycle_detected": bool(graph_details.get("cycle_detected", False)),
+                "rules_triggered_count": int(len(rules_details.get("triggered_rules", [])))
+            },
             latency_ms=round(latency_ms, 2)
         )
 
