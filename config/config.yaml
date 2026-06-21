@@ -24,7 +24,7 @@ models:
     latent_dim: 8
     threshold_percentile: 95
   statistical:
-    z_score_threshold: 3.0
+    z_score_threshold: 2.5
     iqr_multiplier: 1.5
   xgboost:
     max_depth: 5
