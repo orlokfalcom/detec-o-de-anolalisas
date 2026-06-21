@@ -1,21 +1,29 @@
 🧠 📦 REPOSITÓRIO PROFISSIONAL — FRAUD INTELLIGENCE SYSTEM
-🚀 Nome sugerido do projeto
-fraud-intelligence-ai
-📁 Estrutura completa do repositório
+===========================================================
+
+🚀 Nome do Projeto
+------------------
+**fraud-intelligence-ai**
+
+📁 Estrutura do Repositório
+---------------------------
+```
 fraud-intelligence-ai/
 │
-├── README.md
-├── requirements.txt
-├── setup.py
-├── .gitignore
+├── README.md                     # Este guia completo do sistema
+├── requirements.txt              # Dependências em pacotes Python
+├── setup.py                      # Script de instalação do pacote local
+├── .gitignore                    # Regras de exclusão do git para binários e logs
+│
 ├── config/
-│   ├── config.yaml
-│   └── rules.yaml
+│   ├── config.yaml               # Parâmetros de rede, MLflow, e limites de modelos
+│   └── rules.yaml                # Regras regulatórias e limites de compliance (BACEN)
 │
 ├── data/
 │   ├── raw/
 │   ├── processed/
-│   └── sample_transactions.csv
+│   ├── sample_transactions.csv   # Dataset sintético de transações com fraudes acopladas
+│   └── real_transactions.csv     # Dataset real Kaggle mapped no esquema de telemetria
 │
 ├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb
@@ -23,208 +31,136 @@ fraud-intelligence-ai/
 │   └── 03_model_training.ipynb
 │
 ├── src/
-│   ├── main.py
+│   ├── main.py                   # Script de treinamento, carregamento real e simulação
 │   │
 │   ├── pipeline/
-│   │   ├── ingestion.py
-│   │   ├── preprocessing.py
-│   │   ├── feature_engineering.py
-│   │   └── pipeline.py
+│   │   ├── ingestion.py          # Simulador de ingestão batch/streaming
+│   │   ├── preprocessing.py      # Imputação, StandardScaler e Target Encoding (Dispositivos)
+│   │   ├── feature_engineering.py# Extração de velocidade, geografia e desvio cumulativo
+│   │   └── pipeline.py           # Orquestração do processamento raw-to-scaled
 │   │
 │   ├── detectors/
-│   │   ├── statistical.py
-│   │   ├── rules.py
-│   │   ├── isolation_forest.py
-│   │   └── lstm_autoencoder.py
+│   │   ├── statistical.py        # Anomalia de desvios via Z-score e IQR
+│   │   ├── rules.py              # Motor de regras heurísticas regulatórias (Pix Noturno)
+│   │   ├── isolation_forest.py   # Anomalia multidimensional espacial não supervisionada
+│   │   ├── lstm_autoencoder.py   # Reconstrução de sequências temporais normais (PyTorch)
+│   │   ├── xgboost_detector.py   # Classificação supervisionada de fraude de cartões (SMOTE)
+│   │   └── graph_triangulation.py# Análise de grafo em rede de triangulação Pix (NetworkX)
 │   │
 │   ├── ensemble/
-│   │   └── meta_learner.py
+│   │   └── meta_learner.py       # Combinador de scores (Regressão Logística + Veto em Cascata)
 │   │
 │   ├── llm/
-│   │   ├── fraud_explainer.py
-│   │   └── prompts.py
+│   │   ├── fraud_explainer.py    # Explicador gerador de auditoria (Gemini/OpenAI/Mock)
+│   │   └── prompts.py            # Prompts estruturados em Markdown para a IA Generativa
 │   │
 │   ├── decision/
-│   │   └── risk_engine.py
+│   │   └── risk_engine.py        # Conversor de Score consolidado para Ações
 │   │
 │   └── utils/
-│       ├── logger.py
-│       ├── metrics.py
-│       └── helpers.py
+│       ├── logger.py             # Log estruturado em JSON
+│       ├── metrics.py            # Avaliador de Acurácia, F1 e Impacto Financeiro (Economia)
+│       └── helpers.py            # Distância Haversine, cálculo de velocidades
 │
 ├── api/
-│   ├── app.py
-│   └── routes.py
+│   ├── app.py                    # Bootstrap FastAPI com Cache-Aside (In-Memory/Redis)
+│   └── routes.py                 # Endpoint POST /predict
 │
-├── models/
+├── models/                       # Binários serializados dos scalers, encoders e modelos
+│   ├── scaler.pkl
+│   ├── target_encoder.pkl
 │   ├── isolation_forest.pkl
-│   ├── meta_model.pkl
-│   └── scaler.pkl
+│   ├── lstm_autoencoder.pth
+│   ├── xgboost_model.pkl
+│   └── meta_model.pkl
 │
 ├── reports/
-│   └── fraud_report.json
+│   └── fraud_report.json         # Artefato de simulação com predição e explicação gerada
 │
-└── tests/
+└── tests/                        # Conjunto completo de testes pytest
     ├── test_pipeline.py
     ├── test_detectors.py
     └── test_api.py
-🧠 README.md (VERSÃO PROFISSIONAL)
-🧠 Fraud Intelligence AI System
+```
 
-Sistema de detecção e explicação de fraudes financeiras em tempo real, combinando:
+🧱 Arquitetura e Engenharia do Sistema
+--------------------------------------
+O sistema foi arquitetado de forma modular sob conceitos de barreira de latência rígida e tratamento estatístico robusto.
 
-📊 Estatística avançada
-⚙️ Regras de compliance bancário
-🤖 Machine Learning
-🧬 Deep Learning
-🧠 IA Generativa (LLM explicável)
-🔁 Feedback loop contínuo
-🚀 Visão Geral
+### 1. Ingestão e Processamento Stateful
+*   **Feature Engineering**: Transforma as transações computando dinamicamente a velocidade temporal (janelas rolantes de 1 min, 5 min e 1 hora), velocidade de movimentação geográfica física (alerta de impossibilidade espacial utilizando a fórmula de distância Haversine) e desvio estatístico de consumo.
+*   **Target Encoding**: Transforma categorias de IDs de Dispositivos móveis (`device_id`) em um mapeamento contínuo baseado no target de fraude histórico, suavizado por um fator global para evitar overfitting.
 
-Este sistema simula uma arquitetura de nível:
+### 2. Barreira Multicamadas de Detectores (6 Modelos)
+O motor antifraude executa simultaneamente seis estratégias complementares:
+1.  **Motor Heurístico de Regras**: Processa de forma síncrona validações regulatórias, como o limite Pix Noturno imposto pelo Banco Central do Brasil (BACEN) e limites de transações repetitivas.
+2.  **Detector Estatístico (Z-Score & IQR)**: Identifica anomalias volumétricas individuais comparadas diretamente com a média e desvio padrão acumulado das movimentações do próprio cliente.
+3.  **Isolation Forest (ML)**: Algoritmo não supervisionado que localiza e isola anomalias no espaço multidimensional de coordenadas geográficas e quantidades movimentadas.
+4.  **LSTM Autoencoder (Deep Learning)**: Rede Neural Recorrente em PyTorch que aprende a sequência comportamental temporal normal de uso da conta do usuário. Anomalias são detectadas pelo erro de reconstrução na saída.
+5.  **Supervised XGBoost**: Classificador supervisionado com alta precisão e recall para fraude clássica de cartões de crédito. O modelo é treinado sobre base balanceada através do algoritmo SMOTE (`imbalanced-learn`).
+6.  **Grafo de Triangulação (NetworkX)**: Constrói uma representação em rede dirigida das transferências da conta do remetente e do destinatário (`recipient_id`) para acusar ciclos fraudulentos e triangulação de Pix (ex: A -> B -> C -> A) em tempo de execução.
 
-🏦 Banco digital + Fintech + Sistema antifraude inteligente + IA explicável
+### 3. Voto de Veto em Cascata (Decision & Ensemble)
+Para ponderar as opiniões dos modelos, o sistema emprega uma regressão logística treinada (`meta_learner`). No entanto, para fins de compliance bancário, a decisão do modelo de ML é envelopada em uma **Arquitetura de Veto em Cascata**: caso o motor de regras da conformidade acuse uma violação direta ou o grafoNetworkX identifique uma triangulação clara de lavagem Pix, a transação é bloqueada preventivamente (`BLOCK`), sobrepondo o classificador probabilístico.
 
-🧱 Arquitetura do Sistema
-Data Sources
-   ↓
-Ingestion Layer (Batch + Streaming)
-   ↓
-Preprocessing Engine
-   ↓
-Feature Engineering Layer
-   ↓
-Detection Layer:
-   ├── Statistical Detector
-   ├── Rule-based Engine
-   ├── Isolation Forest
-   ├── LSTM Autoencoder
-   ↓
-Ensemble Meta-Learner
-   ↓
-Risk Scoring Engine (0–100)
-   ↓
-LLM Fraud Explainer (IA Generativa)
-   ↓
-Decision Engine:
-   ├── APPROVE
-   ├── MONITOR
-   ├── REVIEW
-   └── BLOCK
-   ↓
-Logging + Feedback Loop
-📊 Feature Engineering
-🔹 Comportamentais
-Média de gastos por usuário
-Desvio padrão de transações
-Frequência por tempo
-🔹 Temporais
-velocity features (1min / 5min / 1h)
-horário incomum
-padrões semanais
-🔹 Geográficos
-distância entre transações
-país incomum
-salto geográfico impossível
-🔹 Dispositivos
-device novo
-troca de fingerprint
-múltiplos dispositivos
-🤖 Detectores
-📊 Estatístico
-Z-score
-IQR
-outliers por janela temporal
-⚙️ Regras de negócio
-limite BACEN
-saque suspeito
-múltiplas transações rápidas
-padrão fora do perfil
-🤖 Isolation Forest
-detecção multidimensional de anomalias
-🧬 LSTM Autoencoder
-aprende sequência normal do usuário
-erro = anomalia
-⚖️ Ensemble Model
-risk_score =
-0.25 *statistical +
-0.25* rules +
-0.25 *isolation_forest +
-0.25* lstm
-🧠 IA GENERATIVA (LLM EXPLICADOR)
-🎯 Objetivo
+### 4. IA Generativa Explicável (LLM)
+As transações de alto risco encaminhadas para fila humana (`REVIEW` ou `BLOCK`) passam pela camada explicadora que formula um prompt complexo traduzindo estatísticas e alertas técnicos de rede para um relatório humanamente legível, no formato ideal para analistas de compliance seniores. 
+*   *Fallback*: Caso nenhuma API key de IA (`GEMINI_API_KEY` ou `OPENAI_API_KEY`) esteja ativa na sessão, o sistema gera deterministicamente o mesmo relatório estruturado localmente via templates sem quebrar o fluxo da API.
 
-Transformar dados técnicos em explicações humanas auditáveis.
+🌐 Especificações da API (FastAPI)
+----------------------------------
+O serviço opera em baixa latência (<50ms).
 
-📥 Entrada do LLM
-transação
-score de risco
-sinais dos modelos
-histórico do usuário
-📤 Saída do LLM
-📌 Explicação da decisão
-motivo da suspeita
-📊 Sinais principais
-dispositivo novo
-valor anormal
-localização inconsistente
-🧬 Análise comportamental
-comparação com histórico
-desvio estatístico
-🧠 Conclusão
-explicação estilo analista antifraude sênior
-🚨 Decision Engine
-Score Decisão
-0–30 APPROVE
-31–60 MONITOR
-61–80 REVIEW
-81–100 BLOCK
-🔁 Feedback Loop
+### Endpoint de Predição Antifraude
+**POST `/predict`**
 
-O sistema aprende continuamente com:
+*   **Request Payload**:
+    ```json
+    {
+      "transaction_id": "TX_990182",
+      "user_id": "U015",
+      "amount": 2500.00,
+      "timestamp": "2026-06-21T22:30:00",
+      "latitude": -23.5505,
+      "longitude": -46.6333,
+      "device_id": "DEV0088",
+      "recipient_id": "U002"
+    }
+    ```
 
-chargebacks
-validação humana
-novos padrões de fraude
-drift de comportamento
-🌐 API (FastAPI)
-Endpoint principal
-POST /predict
-Request
-{
-  "transaction_id": "123",
-  "user_id": "U001",
-  "amount": 5000
-}
-Response
-{
-  "risk_score": 87,
-  "decision": "BLOCK",
-  "llm_explanation": "Transação suspeita devido a padrão inconsistente...",
-  "reasons": ["novo dispositivo", "valor alto", "localização incomum"]
-}
-🧪 Testes
-testes unitários dos detectores
-testes do pipeline completo
-testes da API
-📦 Instalação
-pip install -r requirements.txt
-🚀 Execução
-python src/main.py
+*   **Response Payload**:
+    ```json
+    {
+      "transaction_id": "TX_990182",
+      "user_id": "U015",
+      "risk_score": 100.0,
+      "decision": "BLOCK",
+      "llm_explanation": "### 🧠 RELATÓRIO ANTIFRAUDE...\n\n**1. 📌 Explicação da decisão:**\nTransação bloqueada devido a altíssimo risco...",
+      "reasons": ["bacen_night_limit", "impossible_travel"],
+      "latency_ms": 12.4
+    }
+    ```
 
-ou API:
+🧪 Execução do Ambiente de Treinamento e Testes
+-----------------------------------------------
+1.  **Criação do ambiente virtual e instalação**:
+    ```bash
+    python -m venv .venv
+    .venv\Scripts\pip install -r requirements.txt
+    ```
 
-uvicorn api.app:app --reload
-🔮 Evolução do Sistema
-🧠 Graph Neural Networks antifraude
-⚡ streaming em tempo real (Kafka)
-🛰️ digital twin financeiro
-🤖 agentes autônomos antifraude
-🧬 LLM com memória de fraude (RAG)
-🧠 DIFERENCIAL DO SISTEMA
+2.  **Treinamento completo e Simulação**:
+    O script faz o download do dataset real de fraudes no GitHub, executa o mapeamento, o pipeline de treino sob logs do MLflow e testa a resposta do sistema contra uma transação simulada:
+    ```bash
+    .venv\Scripts\python.exe -m src.main
+    ```
 
-Este não é apenas um detector de fraude.
+3.  **Execução da Suíte de Testes**:
+    ```bash
+    .venv\Scripts\python.exe -m pytest
+    ```
 
-É um:
-
-🧠 Sistema de inteligência antifraude explicável, híbrido e pronto para produção bancária
+4.  **Iniciar a API de Produção**:
+    ```bash
+    .venv\Scripts\uvicorn api.app:app --reload
+    ```
